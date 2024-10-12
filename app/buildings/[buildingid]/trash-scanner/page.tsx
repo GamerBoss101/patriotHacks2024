@@ -4,6 +4,7 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import Webcam from 'react-webcam';
 import { Card, CardBody } from '@nextui-org/card';
 import { Button } from '@nextui-org/button';
+import screenfull from 'screenfull';
 
 const TrashScanner: React.FC = () => {
     const webcamRef = useRef<Webcam>(null);
@@ -91,19 +92,17 @@ const TrashScanner: React.FC = () => {
         drawBox();
     }, [drawBox]);
 
-    const toggleFullScreen = () => {
-        if (!document.fullscreenElement) {
-            containerRef.current?.requestFullscreen();
-        } else {
-            document.exitFullscreen();
+    const toggleFullScreen = useCallback(() => {
+        if (containerRef.current && screenfull.isEnabled) {
+            screenfull.toggle(containerRef.current);
         }
-    };
+    }, []);
 
     return (
         <div className="container-fluid p-4">
-            <h1 className="text-2xl font-bold mb-4">Trash Scanner</h1>
-            <div className="flex flex-col">
-                <Card className="w-full md:w-auto md:max-w-[640px] mb-4 md:mb-0 md:mr-4">
+            <h1 className="text-2xl font-bold text-center mb-4">Trash Scanner</h1>
+            <div className="flex flex-col items-center">
+                <Card className="w-full md:w-auto md:max-w-[640px] mb-4">
                     <CardBody className="p-0">
                         <div ref={containerRef} className="relative aspect-video">
                             <Webcam
@@ -123,7 +122,10 @@ const TrashScanner: React.FC = () => {
                         </div>
                     </CardBody>
                 </Card>
-                <Button onClick={toggleFullScreen} className="mt-4">
+                <Button
+                    onClick={toggleFullScreen}
+                    className="w-full md:w-auto md:max-w-[640px]"
+                >
                     Toggle Fullscreen
                 </Button>
             </div>
