@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextui-org/react";
 import { Accordion, AccordionItem } from "@nextui-org/react";
+import { AzureKeyCredential, DocumentAnalysisClient } from "@azure/ai-form-recognizer";
+import { ElectricityDataPoint, NaturalGasDataPoint } from "../lib/useBuildingData";
 
 interface UploadDataModalProps {
     isOpen: boolean;
@@ -10,6 +12,10 @@ interface UploadDataModalProps {
     buildingid: string;
     updateBuilding: (newData: any) => void;
 }
+
+const EMISSIONS_FACTOR = 0.5;
+const key = process.env.NEXT_PUBLIC_FORM_RECOGNIZER_KEY;
+const endpoint = process.env.NEXT_PUBLIC_FORM_RECOGNIZER_ENDPOINT;
 
 export function UploadDataModal({ isOpen, onClose, buildingid, updateBuilding }: UploadDataModalProps) {
     const [isSubmitted, setIsSubmitted] = useState(false);
@@ -37,6 +43,140 @@ export function UploadDataModal({ isOpen, onClose, buildingid, updateBuilding }:
             if (electricityFileUrl) URL.revokeObjectURL(electricityFileUrl);
         };
     }, [gasFileUrl, electricityFileUrl]);
+
+    const extractDataFromPDF = async (file: File, type: 'gas' | 'electricity') => {
+        const client = new DocumentAnalysisClient(endpoint!, new AzureKeyCredential(key!));
+
+        const arrayBuffer = await file.arrayBuffer();
+        const poller = await client.beginAnalyzeDocument("prebuilt-document", arrayBuffer);
+        const { keyValuePairs } = await poller.pollUntilDone();
+
+        if (!keyValuePairs) return [];
+
+        const dataPoints: (ElectricityDataPoint | NaturalGasDataPoint)[] = [];
+        let extractedDate: Date | null = null;
+
+        const monthMap: { [key: string]: number } = {
+            'jan': 0, 'january': 0, 'feb': 1, 'february': 1, 'mar': 2, 'march': 2,
+            'apr': 3, 'april': 3, 'may': 4, 'jun': 5, 'june': 5, 'jul': 6, 'july': 6,
+            'aug': 7, 'august': 7, 'sep': 8, 'september': 8, 'oct': 9, 'october': 9,
+            'nov': 10, 'november': 10, 'dec': 11, 'december': 11
+        };
+
+        for (const { key, value } of keyValuePairs) {
+            console.log("KEY:", key.content, "VALUE:", value?.content);
+            if (!value) continue;
+
+            const keyLower = key.content.toLowerCase();
+            const valueLower = value.content.toLowerCase();
+
+            // Extract date information
+            if (keyLower.includes('date') || keyLower.includes('period')) {
+                console.log("DATE IDENTIFIED:", valueLower);
+                const dateMatch = valueLower.match(/(\d{1,2})\s*(?:st|nd|rd|th)?\s*(?:of)?\s*([a-z]+)?\s*(\d{4})?/i);
+
+                console.log("DATE MATCH:", dateMatch);
+
+                if (dateMatch) {
+                    const day = 1; // Always assume 1st of the month
+                    const month = dateMatch[2] ? monthMap[dateMatch[2].toLowerCase()] : new Date().getMonth();
+                    const year = dateMatch[3] ? parseInt(dateMatch[3]) : new Date().getFullYear();
+
+                    if (year >= 1900 && year <= 2100) {
+                        extractedDate = new Date(year, month, day);
+                    }
+                }
+            }
+
+            if (type === 'electricity' && keyLower.includes('kwh')) {
+                const kwh = parseFloat(value.content || '0');
+
+                if (kwh !== 0) {
+                    const timestamp = extractedDate || new Date();
+                    timestamp.setHours(0, 0, 0, 0); // Set to midnight
+
+                    const existingDataIndex = dataPoints.findIndex(point =>
+                        point.timestamp.seconds === timestamp.getTime() / 1000
+                    );
+
+                    if (existingDataIndex === -1) {
+                        dataPoints.push({
+                            timestamp: { seconds: timestamp.getTime() / 1000, nanoseconds: 0 },
+                            kwh: kwh,
+                            emissions: kwh * EMISSIONS_FACTOR,
+                        });
+                    } else {
+                        dataPoints[existingDataIndex] = {
+                            ...dataPoints[existingDataIndex],
+                            kwh: kwh,
+                            emissions: kwh * EMISSIONS_FACTOR,
+                        };
+                    }
+                }
+            } else if (type === 'gas' && keyLower.includes('therm')) {
+                const therms = parseFloat(value.content || '0');
+
+                if (therms !== 0) {
+                    const timestamp = extractedDate || new Date();
+                    timestamp.setHours(0, 0, 0, 0); // Set to midnight
+
+                    const existingDataIndex = dataPoints.findIndex(point =>
+                        point.timestamp.seconds === timestamp.getTime() / 1000
+                    );
+
+                    if (existingDataIndex === -1) {
+                        dataPoints.push({
+                            timestamp: { seconds: timestamp.getTime() / 1000, nanoseconds: 0 },
+                            therms: therms,
+                            emissions: therms * 5.3, // approx CO2 emissions for natural gas (5.3 kg CO2 per therm)
+                        });
+                    } else {
+                        dataPoints[existingDataIndex] = {
+                            ...dataPoints[existingDataIndex],
+                            therms: therms,
+                            emissions: therms * 5.3,
+                        };
+                    }
+                }
+            }
+        }
+
+        return dataPoints;
+    };
+
+    const handleExtraction = async () => {
+        setExtractionStatus('loading');
+        try {
+            let newData: any = {};
+
+            if (gasFile) {
+                const gasData = await extractDataFromPDF(gasFile, 'gas');
+                console.log("Gas data:");
+                gasData.forEach(dataPoint => {
+                    console.log("Date:", new Date(dataPoint.timestamp.seconds * 1000).toLocaleDateString(), "Therms:", (dataPoint as NaturalGasDataPoint).therms);
+                });
+                newData.naturalGasUsage = gasData;
+            }
+
+            if (electricityFile) {
+                const electricityData = await extractDataFromPDF(electricityFile, 'electricity');
+                console.log("Electricity data:");
+                electricityData.forEach(dataPoint => {
+                    console.log("Date:", new Date(dataPoint.timestamp.seconds * 1000).toLocaleDateString(), "kWh:", (dataPoint as ElectricityDataPoint).kwh);
+                });
+                newData.electricityUsage = electricityData;
+            }
+
+            setDataPreview(newData);
+            setExtractionStatus('complete');
+
+            // Update the building data
+            updateBuilding(newData);
+        } catch (error) {
+            console.error("Error during extraction:", error);
+            setExtractionStatus('idle');
+        }
+    };
 
     return (
         <Modal backdrop="blur" isOpen={isOpen} size="xl" onClose={onClose}>
@@ -160,13 +300,7 @@ export function UploadDataModal({ isOpen, onClose, buildingid, updateBuilding }:
                                             {extractionStatus === 'idle' && (
                                                 <Button
                                                     color="primary"
-                                                    onPress={() => {
-                                                        setExtractionStatus('loading');
-                                                        setTimeout(() => {
-                                                            setExtractionStatus('complete');
-                                                            setDataPreview({ /* mock data */ });
-                                                        }, 2000);
-                                                    }}
+                                                    onPress={handleExtraction}
                                                 >
                                                     Start Extraction
                                                 </Button>
