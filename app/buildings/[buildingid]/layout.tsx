@@ -1,5 +1,5 @@
 // app/buildings/[buildingid]/layout.tsx
-import Sidebar from "./sidebar/sidebar";
+import Sidebar from "../../../components/sidebar/sidebar";
 
 export default function BuildingLayout({
     children,
@@ -9,7 +9,7 @@ export default function BuildingLayout({
     params: { buildingid: string };
 }) {
     return (
-        <div className="flex h-screen w-full -pt-16 mt-0">
+        <div className="flex h-screen w-full">
             <Sidebar buildingid={params.buildingid} />
             <main className="flex-1">{children}</main>
         </div>

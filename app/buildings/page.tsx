@@ -1,6 +1,6 @@
 // app/buildings/page.tsx
 "use client";
-import { Card, CardHeader, CardFooter, Image, Button } from "@nextui-org/react";
+import { Card, CardHeader, CardFooter, Image, Button, Skeleton } from "@nextui-org/react";
 import Link from "next/link";
 
 import { useBuildingList } from "@/lib/useBuildingData";
@@ -9,7 +9,17 @@ import { useBuildingList } from "@/lib/useBuildingData";
 export default function BuildingsPage() {
     const { data: buildings, isLoading, error } = useBuildingList();
 
-    if (isLoading) return <div>Loading...</div>;
+    if (isLoading) return (
+        <div className="grid grid-cols-12 gap-4 p-4">
+            {[...Array(2)].map((_, index) => (
+                <Card key={index} className="w-full h-[300px] col-span-12 sm:col-span-6 md:col-span-4">
+                    <Skeleton className="rounded-lg">
+                        <div className="h-[300px]" />
+                    </Skeleton>
+                </Card>
+            ))}
+        </div>
+    );
     if (error) return <div>Error: {error.message}</div>;
 
     if (buildings) return (

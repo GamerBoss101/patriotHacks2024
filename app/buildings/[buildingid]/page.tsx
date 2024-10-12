@@ -6,8 +6,8 @@ interface BuildingPageProps {
 
 export default function BuildingPage({ params }: BuildingPageProps) {
     return (
-        <div className="">
-            Building content will go here
+        <div className="flex items-center justify-center text-center h-full">
+            Select a tab to view information about this building.
         </div>
     );
 }
