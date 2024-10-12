@@ -2,7 +2,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { collection, getDocs, doc, setDoc, getDoc } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, getDoc, Timestamp } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
 
@@ -19,7 +19,7 @@ export type NaturalGasDataPoint = {
 };
 
 export type WasteDataPoint = {
-    timestamp: Date;
+    timestamp: Timestamp;
     type: string;
     trashcanID: string;
     wasteCategory: string;
