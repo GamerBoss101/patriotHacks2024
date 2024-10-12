@@ -26,6 +26,7 @@ const TrashScanner: React.FC = () => {
     // listener to set canvas size when video is ready
     useEffect(() => {
         const video = webcamRef.current?.video;
+
         if (video) {
             video.addEventListener('loadedmetadata', setCanvasSize);
         }

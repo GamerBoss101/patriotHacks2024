@@ -28,12 +28,12 @@ export default function EmissionsPage({ params }: EmissionsPageProps) {
             const allDates = [
                 ...buildingData.electricityUsage.map(d => d.timestamp),
                 ...buildingData.naturalGasUsage.map(d => d.timestamp),
-                ...buildingData.wasteGeneration.map(d => d.timestamp.toDate())
+                ...buildingData.wasteGeneration.map(d => d.timestamp)
             ];
 
             if (allDates.length > 0) {
-                const earliestDate = new Date(Math.min(...allDates.map(d => d.getTime())));
-                const latestDate = new Date(Math.max(...allDates.map(d => d.getTime())));
+                const earliestDate = new Date(Math.min(...allDates.map(d => (d as Date).getTime())));
+                const latestDate = new Date(Math.max(...allDates.map(d => (d as Date).getTime())));
 
                 earliestDate.setDate(earliestDate.getDate() - 1);
                 latestDate.setDate(latestDate.getDate() + 1);

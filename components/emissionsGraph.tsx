@@ -55,7 +55,7 @@ export default function EmissionsGraph({ buildingid, filters }: EmissionsGraphPr
 
         if (filters.showWaste) {
             building.wasteGeneration.forEach((point: WasteDataPoint) => {
-                addDataPoint(point.timestamp.toDate(), 'waste', point.emissions);
+                addDataPoint(new Date(point.timestamp.seconds * 1000), 'waste', point.emissions);
             });
         }
 

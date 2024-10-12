@@ -27,6 +27,7 @@ export default function TrashPage() {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
+
         setNewEntry(prev => ({ ...prev, [name]: value }));
     };
 
@@ -35,12 +36,14 @@ export default function TrashPage() {
             ...building!.wasteGeneration,
             { ...newEntry, timestamp: Timestamp.fromDate(new Date(newEntry.timestamp)), emissions: Number(newEntry.emissions) }
         ];
+
         updateBuilding({ wasteGeneration: updatedWasteGeneration as WasteDataPoint[] });
         setIsModalOpen(false);
     };
 
     const handleSort = (key: keyof WasteDataPoint) => {
         let direction: 'ascending' | 'descending' = 'ascending';
+
         if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
             direction = 'descending';
         }
@@ -56,8 +59,7 @@ export default function TrashPage() {
     });
 
     const handleDelete = (index: number) => {
-        const updatedWasteGeneration = building.wasteGeneration.filter((_, i) => i !== index);
-        updateBuilding({ wasteGeneration: updatedWasteGeneration });
+        updateBuilding({ operation: 'deleteWasteEntry', index });
     };
 
     return (
@@ -75,7 +77,7 @@ export default function TrashPage() {
                 <TableBody>
                     {sortedWasteGeneration.map((wastePoint, index) => (
                         <TableRow key={index}>
-                            <TableCell>{wastePoint.timestamp.toDate().toLocaleString()}</TableCell>
+                            <TableCell>{wastePoint.timestamp.toLocaleString()}</TableCell>
                             <TableCell>{wastePoint.wasteCategory}</TableCell>
                             <TableCell>{wastePoint.type}</TableCell>
                             <TableCell>{wastePoint.trashcanID}</TableCell>

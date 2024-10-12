@@ -2,9 +2,6 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { collection, getDocs, doc, setDoc, getDoc, Timestamp } from "firebase/firestore";
-
-import { db } from "@/lib/firebase";
 
 export type ElectricityDataPoint = {
     timestamp: Date;
@@ -19,7 +16,10 @@ export type NaturalGasDataPoint = {
 };
 
 export type WasteDataPoint = {
-    timestamp: Timestamp;
+    timestamp: {
+        seconds: number;
+        nanoseconds: number;
+    };
     type: string;
     trashcanID: string;
     wasteCategory: string;
@@ -38,29 +38,35 @@ export type Building = {
     wasteGeneration: Array<WasteDataPoint>;
 }
 
-const getBuildingsFromFirebase = async () => {
-    const querySnapshot = await getDocs(collection(db, "buildings"));
-    const buildings: Building[] = [];
-
-    querySnapshot.forEach(doc => {
-        buildings.push({ id: doc.id, ...doc.data() } as Building);
-    });
-
-    return buildings;
+const getBuildingsFromAPI = async () => {
+    const response = await fetch('/api/buildings');
+    if (!response.ok) {
+        throw new Error('Network response was not ok');
+    }
+    return response.json();
 }
 
-const updateBuildingInFirebase = async (buildingId: string, newData: Partial<Building>) => {
-    const docRef = doc(db, "buildings", buildingId);
-
-    await setDoc(docRef, newData, { merge: true });
+const updateBuildingInAPI = async (buildingId: string, newData: Partial<Building> & { operation?: string; index?: number }) => {
+    const response = await fetch('/api/buildings', {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: buildingId, ...newData }),
+    });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Network response was not ok: ${response.status} ${response.statusText}. ${JSON.stringify(errorData)}`);
+    }
+    return response.json();
 }
 
 export function useBuildingList() {
     const query = useQuery<Building[], Error>({
         queryKey: ['buildings'],
-        queryFn: getBuildingsFromFirebase,
-        staleTime: 10 * 60 * 1000, // 10 minutes until data is considered stale
-        gcTime: 15 * 60 * 1000, // 15 minutes until unused data is garbage collected
+        queryFn: getBuildingsFromAPI,
+        staleTime: 10 * 60 * 1000,
+        gcTime: 15 * 60 * 1000,
     });
 
     return {
@@ -73,25 +79,35 @@ export function useBuilding(buildingId: string) {
 
     const query = useQuery<Building, Error>({
         queryKey: ['building', buildingId],
-        queryFn: () => getBuildingFromFirebase(buildingId),
-        staleTime: 10 * 60 * 1000, // 10 minutes until data is considered stale
-        gcTime: 15 * 60 * 1000, // 15 minutes until unused data is garbage collected
+        queryFn: () => getBuildingFromAPI(buildingId),
+        staleTime: 10 * 60 * 1000,
+        gcTime: 15 * 60 * 1000,
     });
 
     const mutation = useMutation({
-        mutationFn: (data: Partial<Building>) => updateBuildingInFirebase(buildingId, data),
+        mutationFn: (data: Partial<Building> & { operation?: string; index?: number }) => updateBuildingInAPI(buildingId, data),
         onMutate: async (data) => {
             await queryClient.cancelQueries({ queryKey: ['building', buildingId] });
             const previousBuilding = queryClient.getQueryData<Building>(['building', buildingId]);
 
             queryClient.setQueryData<Building>(['building', buildingId], (oldData) => {
-                return oldData ? { ...oldData, ...data } : undefined;
+                if (!oldData) return undefined;
+
+                if (data.operation === 'deleteWasteEntry' && typeof data.index === 'number') {
+                    const newWasteGeneration = [...oldData.wasteGeneration];
+                    newWasteGeneration.splice(data.index, 1);
+                    return { ...oldData, wasteGeneration: newWasteGeneration };
+                }
+
+                return { ...oldData, ...data };
             });
 
             return { previousBuilding };
         },
         onError: (err, newData, context) => {
             console.error("Error updating building data:", err);
+            // Log additional details about the failed update
+            console.error("Failed update data:", newData);
             queryClient.setQueryData(['building', buildingId], context!.previousBuilding);
         },
         onSettled: () => {
@@ -105,13 +121,10 @@ export function useBuilding(buildingId: string) {
     };
 }
 
-const getBuildingFromFirebase = async (buildingId: string): Promise<Building> => {
-    const docRef = doc(db, "buildings", buildingId);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as Building;
-    } else {
-        throw new Error("Building not found");
+const getBuildingFromAPI = async (buildingId: string): Promise<Building> => {
+    const response = await fetch(`/api/buildings?id=${buildingId}`);
+    if (!response.ok) {
+        throw new Error('Network response was not ok');
     }
+    return response.json();
 }
