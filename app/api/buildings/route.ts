@@ -49,19 +49,19 @@ export async function GET(request: Request) {
     }
 }
 
-function deepMerge(target: any, source: any) {
-    for (const key in source) {
-        if (Array.isArray(source[key])) {
-            if (!target[key]) target[key] = [];
-            target[key] = [...target[key], ...source[key]];
-        } else if (source[key] instanceof Object && key in target) {
-            deepMerge(target[key], source[key]);
-        } else {
-            target[key] = source[key];
-        }
-    }
-    return target;
-}
+// function deepMerge(target: any, source: any) {
+//     for (const key in source) {
+//         if (Array.isArray(source[key])) {
+//             if (!target[key]) target[key] = [];
+//             target[key] = [...target[key], ...source[key]];
+//         } else if (source[key] instanceof Object && key in target) {
+//             deepMerge(target[key], source[key]);
+//         } else {
+//             target[key] = source[key];
+//         }
+//     }
+//     return target;
+// }
 
 export async function PATCH(request: Request) {
     try {
@@ -83,7 +83,7 @@ export async function PATCH(request: Request) {
             existingItem.wasteGeneration.splice(index, 1);
         } else {
             // Deep merge the existing data with the new data
-            existingItem = deepMerge(existingItem, data);
+            existingItem = { ...existingItem, ...data };
         }
 
 

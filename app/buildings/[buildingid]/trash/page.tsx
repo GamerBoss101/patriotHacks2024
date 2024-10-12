@@ -77,7 +77,7 @@ export default function TrashPage() {
                 <TableBody>
                     {sortedWasteGeneration.map((wastePoint, index) => (
                         <TableRow key={index}>
-                            <TableCell>{wastePoint.timestamp.toLocaleString()}</TableCell>
+                            <TableCell>{new Date(wastePoint.timestamp.seconds * 1000).toLocaleString()}</TableCell>
                             <TableCell>{wastePoint.wasteCategory}</TableCell>
                             <TableCell>{wastePoint.type}</TableCell>
                             <TableCell>{wastePoint.trashcanID}</TableCell>
