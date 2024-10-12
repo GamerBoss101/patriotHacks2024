@@ -1,5 +1,5 @@
 // app/buildings/[buildingid]/layout.tsx
-import Sidebar from "../../../components/sidebar/sidebar";
+import Sidebar from "../../../components/sidebar";
 
 export default function BuildingLayout({
     children,

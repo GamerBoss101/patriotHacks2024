@@ -45,7 +45,7 @@ export default function BuildingsPage() {
                             <p className="text-white text-tiny">Year Built: {building.yearBuilt}</p>
                             <p className="text-white text-tiny">Square Footage: {building.squareFootage}</p>
                         </div>
-                        <Link href={`/buildings/${building.id}`}>
+                        <Link href={`/buildings/${building.id}/emissions`}>
                             <Button className="text-tiny" color="primary" radius="full" size="sm">
                                 View Building
                             </Button>
