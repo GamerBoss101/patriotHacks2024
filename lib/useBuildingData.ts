@@ -4,13 +4,19 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export type ElectricityDataPoint = {
-    timestamp: Date;
+    timestamp: {
+        seconds: number;
+        nanoseconds: number;
+    };
     kwh: number;
     emissions: number;
 };
 
 export type NaturalGasDataPoint = {
-    timestamp: Date;
+    timestamp: {
+        seconds: number;
+        nanoseconds: number;
+    };
     therms: number;
     emissions: number;
 };
@@ -40,9 +46,11 @@ export type Building = {
 
 const getBuildingsFromAPI = async () => {
     const response = await fetch('/api/buildings');
+
     if (!response.ok) {
         throw new Error('Network response was not ok');
     }
+
     return response.json();
 }
 

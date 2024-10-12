@@ -32,8 +32,8 @@ export default function EmissionsPage({ params }: EmissionsPageProps) {
             ];
 
             if (allDates.length > 0) {
-                const earliestDate = new Date(Math.min(...allDates.map(d => (d as Date).getTime())));
-                const latestDate = new Date(Math.max(...allDates.map(d => (d as Date).getTime())));
+                const earliestDate = new Date(Math.min(...allDates.map(d => (d as any).seconds)));
+                const latestDate = new Date(Math.max(...allDates.map(d => (d as any).seconds)));
 
                 earliestDate.setDate(earliestDate.getDate() - 1);
                 latestDate.setDate(latestDate.getDate() + 1);

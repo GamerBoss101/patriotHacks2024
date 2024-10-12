@@ -43,13 +43,13 @@ export default function EmissionsGraph({ buildingid, filters }: EmissionsGraphPr
 
         if (filters.showElectricity) {
             building.electricityUsage.forEach((point: ElectricityDataPoint) => {
-                addDataPoint(point.timestamp, 'electricity', point.emissions);
+                addDataPoint(new Date(point.timestamp.seconds * 1000), 'electricity', point.emissions);
             });
         }
 
         if (filters.showGas) {
             building.naturalGasUsage.forEach((point: NaturalGasDataPoint) => {
-                addDataPoint(point.timestamp, 'gas', point.emissions);
+                addDataPoint(new Date(point.timestamp.seconds * 1000), 'gas', point.emissions);
             });
         }
 
