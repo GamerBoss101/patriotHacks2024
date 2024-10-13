@@ -2,11 +2,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { toBase64 } from 'openai/core';
+
 export async function POST(request: NextRequest) {
     try {
         const formData = await request.formData();
 
-        let res = await fetch("http://localhost:5000/convert", {
+        let res = await fetch(process.env.PDF_URI, {
             method: 'POST',
             body: formData
         });
