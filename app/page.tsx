@@ -65,7 +65,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <FeatureBox
               title="Smart Bins with Real-time Feedback"
-              description="Our AI-powered smart bins guide students on proper waste disposal and provide immediate feedback through interactive faces."
+              description="Utilize our AI-powered smart bins to guide students on proper waste disposal, and get immediate feedback."
               theme={theme}
             />
             <FeatureBox
