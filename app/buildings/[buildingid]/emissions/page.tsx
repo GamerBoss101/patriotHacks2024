@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { CalendarDate } from "@internationalized/date";
 
 import EmissionsGraph from "@/components/emissionsGraph";
 import { useBuilding } from "@/lib/useBuildingData";
@@ -10,6 +11,9 @@ import { Divider } from "@nextui-org/divider";
 import AddDataButton from "@/components/addDataButton";
 import { ButtonGroup } from "@nextui-org/button";
 import { Card, CardHeader, CardBody } from "@nextui-org/react";
+import { Input } from "@nextui-org/input";
+import { Popover, PopoverTrigger, PopoverContent } from "@nextui-org/popover";
+import { Calendar, DateValue } from "@nextui-org/calendar";
 
 interface EmissionsPageProps {
     params: { buildingid: string };
@@ -19,8 +23,8 @@ export default function EmissionsPage({ params }: EmissionsPageProps) {
     const { data: buildingData } = useBuilding(params.buildingid);
 
     // State for filters
-    const [startDate, setStartDate] = useState<Date | null>(null);
-    const [endDate, setEndDate] = useState<Date | null>(null);
+    const [startDate, setStartDate] = useState<DateValue | null>(null);
+    const [endDate, setEndDate] = useState<DateValue | null>(null);
     const [showWaste, setShowWaste] = useState(true);
     const [showElectricity, setShowElectricity] = useState(true);
     const [showGas, setShowGas] = useState(true);
@@ -41,8 +45,8 @@ export default function EmissionsPage({ params }: EmissionsPageProps) {
                 earliestDate.setDate(earliestDate.getDate() - 1);
                 latestDate.setDate(latestDate.getDate() + 1);
 
-                setStartDate(earliestDate);
-                setEndDate(latestDate);
+                setStartDate(new CalendarDate(earliestDate.getFullYear(), earliestDate.getMonth() + 1, earliestDate.getDate()));
+                setEndDate(new CalendarDate(latestDate.getFullYear(), latestDate.getMonth() + 1, latestDate.getDate()));
             }
         }
     }, [buildingData]);
@@ -70,6 +74,14 @@ export default function EmissionsPage({ params }: EmissionsPageProps) {
             console.error('Error converting PDF to image:', error);
             // Handle the error (e.g., show an error message to the user)
         }
+    };
+
+    const handleStartDateChange = (date: DateValue) => {
+        setStartDate(date);
+    };
+
+    const handleEndDateChange = (date: DateValue) => {
+        setEndDate(date);
     };
 
     return (
@@ -143,6 +155,47 @@ export default function EmissionsPage({ params }: EmissionsPageProps) {
                             </ButtonGroup>
                         </CardBody>
                     </Card>
+
+                    {/* Date Range Selection Card */}
+                    <Card className="flex-1">
+                        <CardHeader>
+                            <h3 className="text-lg font-semibold">Date Range</h3>
+                        </CardHeader>
+                        <CardBody>
+                            <div className="flex gap-2">
+                                <Popover placement="bottom">
+                                    <PopoverTrigger>
+                                        <Input
+                                            label="Start Date"
+                                            value={startDate ? startDate.toString() : ''}
+                                            readOnly
+                                        />
+                                    </PopoverTrigger>
+                                    <PopoverContent>
+                                        <Calendar
+                                            value={startDate}
+                                            onChange={handleStartDateChange}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                                <Popover placement="bottom">
+                                    <PopoverTrigger>
+                                        <Input
+                                            label="End Date"
+                                            value={endDate ? endDate.toString() : ''}
+                                            readOnly
+                                        />
+                                    </PopoverTrigger>
+                                    <PopoverContent>
+                                        <Calendar
+                                            value={endDate}
+                                            onChange={handleEndDateChange}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+                        </CardBody>
+                    </Card>
                 </div>
 
                 <Divider className="mt-6" />
@@ -150,7 +203,7 @@ export default function EmissionsPage({ params }: EmissionsPageProps) {
                 {/* Render emissions graph */}
                 <EmissionsGraph
                     buildingid={params.buildingid}
-                    filters={{ startDate, endDate, showWaste, showElectricity, showGas }}
+                    filters={{ startDate: startDate ? startDate.toDate('UTC') : null, endDate: endDate ? endDate.toDate('UTC') : null, showWaste, showElectricity, showGas }}
                     graphType={graphType}
                 />
             </div>
