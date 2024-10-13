@@ -26,6 +26,7 @@ export function UploadDataModal({ isOpen, onClose, buildingid, updateBuilding }:
     const [gasFileUrl, setGasFileUrl] = useState<string | null>(null);
     const [electricityFileUrl, setElectricityFileUrl] = useState<string | null>(null);
     const [extractionStatus, setExtractionStatus] = useState<'idle' | 'loading' | 'complete'>('idle');
+    const [aiExtractionStatus, setAiExtractionStatus] = useState<'idle' | 'loading' | 'complete'>('idle');
     const [dataPreview, setDataPreview] = useState<any>(null);
     const router = useRouter();
 
@@ -107,13 +108,13 @@ export function UploadDataModal({ isOpen, onClose, buildingid, updateBuilding }:
                         dataPoints.push({
                             timestamp: { seconds: timestamp.getTime() / 1000, nanoseconds: 0 },
                             kwh: kwh,
-                            emissions: kwh * EMISSIONS_FACTOR,
+                            emissions: kwh * EMISSIONS_FACTOR / 1000,
                         });
                     } else {
                         dataPoints[existingDataIndex] = {
                             ...dataPoints[existingDataIndex],
                             kwh: kwh,
-                            emissions: kwh * EMISSIONS_FACTOR,
+                            emissions: kwh * EMISSIONS_FACTOR / 1000,
                         };
                     }
                 }
@@ -133,13 +134,13 @@ export function UploadDataModal({ isOpen, onClose, buildingid, updateBuilding }:
                         dataPoints.push({
                             timestamp: { seconds: timestamp.getTime() / 1000, nanoseconds: 0 },
                             therms: therms,
-                            emissions: therms * 5.3, // approx CO2 emissions for natural gas (5.3 kg CO2 per therm)
+                            emissions: therms * 5.3 / 1000, // approx CO2 emissions for natural gas (5.3 kg CO2 per therm, measured in tons)
                         });
                     } else {
                         dataPoints[existingDataIndex] = {
                             ...dataPoints[existingDataIndex],
                             therms: therms,
-                            emissions: therms * 5.3,
+                            emissions: therms * 5.3 / 1000,
                         };
                     }
                 }
@@ -183,6 +184,71 @@ export function UploadDataModal({ isOpen, onClose, buildingid, updateBuilding }:
             console.error("Error during extraction:", error);
             setExtractionStatus('idle');
         }
+    };
+
+    const handleAIExtraction = async () => {
+        setAiExtractionStatus('loading');
+        try {
+            let newData: any = {};
+
+            if (gasFile) {
+                const gasData = await extractDataUsingAI(gasFile, 'gas');
+                newData.naturalGasUsage = gasData;
+            }
+
+            if (electricityFile) {
+                const electricityData = await extractDataUsingAI(electricityFile, 'electricity');
+                newData.electricityUsage = electricityData;
+            }
+
+            setDataPreview(newData);
+            setAiExtractionStatus('complete');
+
+            // Update the building data
+            updateBuilding(newData);
+        } catch (error) {
+            console.error("Error during AI extraction:", error);
+            setAiExtractionStatus('idle');
+        }
+    };
+
+    const extractDataUsingAI = async (file: File, type: 'gas' | 'electricity') => {
+        // Step 1: Convert PDF to image
+        const formData = new FormData();
+
+        formData.append('pdf', file, file.name);
+        formData.append('type', type);
+
+        const pdfToImageResponse = await fetch('/api/pdf-to-image', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!pdfToImageResponse.ok) {
+            throw new Error('Failed to convert PDF to image');
+        }
+
+        const { response } = await pdfToImageResponse.json();
+        console.log("PDF TO IMAGE RESPONSE", response);
+
+        // Parse the JSON response
+        const parsedData: string = response.response;
+
+        //Trim the string to remove the "anything before first {" and "and after last }"
+        const trimmedData = parsedData.replace(/^[^{]*|[^}]*$/g, '');
+
+        const parsedTrimmedData = JSON.parse(trimmedData);
+        console.log("PARSED TRIMMED DATA", parsedTrimmedData);
+
+        // Convert the parsed data to the format expected by the application
+        return parsedTrimmedData.dataPoints.map((point: any) => ({
+            timestamp: {
+                seconds: new Date(point.date).getTime() / 1000,
+                nanoseconds: 0
+            },
+            [type === 'gas' ? 'therms' : 'kwh']: point.usage,
+            emissions: point.usage * (type === 'gas' ? 5.3 : EMISSIONS_FACTOR) / 1000,
+        }));
     };
 
     return (
@@ -304,16 +370,26 @@ export function UploadDataModal({ isOpen, onClose, buildingid, updateBuilding }:
                                             )}
                                         </AccordionItem>
                                         <AccordionItem key="2" aria-label="Data Extraction" title="Data Extraction">
-                                            {extractionStatus === 'idle' && (
-                                                <Button
-                                                    color="primary"
-                                                    onPress={handleExtraction}
-                                                >
-                                                    Start Extraction
-                                                </Button>
+                                            {extractionStatus === 'idle' && aiExtractionStatus === 'idle' && (
+                                                <div className="flex space-x-4">
+                                                    <Button
+                                                        color="primary"
+                                                        onPress={handleExtraction}
+                                                    >
+                                                        Start Form Recognizer Extraction
+                                                    </Button>
+                                                    <Button
+                                                        color="secondary"
+                                                        onPress={handleAIExtraction}
+                                                    >
+                                                        Start AI-Powered Extraction
+                                                    </Button>
+                                                </div>
                                             )}
-                                            {extractionStatus === 'loading' && <p>Extracting data...</p>}
-                                            {extractionStatus === 'complete' && <p>Extraction complete!</p>}
+                                            {extractionStatus === 'loading' && <p>Extracting data using Form Recognizer...</p>}
+                                            {aiExtractionStatus === 'loading' && <p>Extracting data using AI...</p>}
+                                            {extractionStatus === 'complete' && <p>Form Recognizer extraction complete!</p>}
+                                            {aiExtractionStatus === 'complete' && <p>AI-powered extraction complete!</p>}
                                         </AccordionItem>
                                         <AccordionItem key="3" aria-label="Data Preview" title="Data Preview">
                                             {dataPreview ? (

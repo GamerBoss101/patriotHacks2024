@@ -56,11 +56,12 @@ export default function EmissionsPage({ params }: EmissionsPageProps) {
             const formData = new FormData();
             const pdfResponse = await fetch('/electricity-sample-bill.pdf');
             const pdfBlob = await pdfResponse.blob();
+
             formData.append('pdf', pdfBlob, 'electricity-sample-bill.pdf');
 
             const response = await fetch('/api/pdf-to-image', {
                 method: 'POST',
-                body: formData,
+                body: { ...formData, type: 'electricity' }
             });
 
             if (!response.ok) {
@@ -97,8 +98,6 @@ export default function EmissionsPage({ params }: EmissionsPageProps) {
             <div className="flex flex-col justify-center w-full h-full">
                 {/* Horizontal group for adding data and filters */}
                 <AddDataButton buildingid={params.buildingid} />
-                {/* TESTING PDF TO IMAGE */}
-                <Button onClick={handlePdfToImage}>Convert PDF to Image</Button>
 
                 <div className="flex gap-4 mt-4">
                     {/* Data Type Selection Card */}

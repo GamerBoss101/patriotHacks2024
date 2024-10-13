@@ -148,7 +148,7 @@ export default function EmissionsGraph({ buildingid, filters, graphType }: Emiss
         <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" />
-            <YAxis label={{ value: 'Emissions (kg CO2e)', angle: -90, position: 'insideLeft' }} />
+            <YAxis label={{ value: 'Emissions (metric tons CO2e)', angle: -90, position: 'insideLeft', dy: 96 }} />
             <Tooltip formatter={(value) => Number(value).toFixed(3)} />
             <Legend />
             {filters.showElectricity && building && building.electricityUsage.length > 0 &&
@@ -164,7 +164,7 @@ export default function EmissionsGraph({ buildingid, filters, graphType }: Emiss
         <AreaChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" />
-            <YAxis label={{ value: 'Emissions (kg CO2e)', angle: -90, position: 'insideLeft' }} />
+            <YAxis label={{ value: 'Emissions (metric tons CO2e)', angle: -90, position: 'insideLeft' }} />
             <Tooltip formatter={(value) => Number(value).toFixed(3)} />
             <Legend />
             {filters.showElectricity && building && building.electricityUsage.length > 0 &&
