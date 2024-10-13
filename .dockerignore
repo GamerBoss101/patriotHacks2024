@@ -1,0 +1,44 @@
+# Ignore node_modules directory
+node_modules
+
+# Ignore npm debug log
+npm-debug.log
+
+# Ignore Dockerfile and .dockerignore file
+Dockerfile
+.dockerignore
+
+# Ignore local environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Ignore build output
+/build
+/dist
+
+# Ignore logs
+logs
+*.log
+
+# Ignore temporary files
+tmp
+temp
+*.tmp
+*.temp
+
+# Ignore coverage directory
+coverage
+
+# Ignore .git directory and related files
+.git
+.gitignore
+
+# Ignore node_modules directory
+node_modules
+
+# Ignore yarn.lock file
+yarn.lock
+
