@@ -87,6 +87,9 @@ export default function EmissionsPage({ params }: EmissionsPageProps) {
     return (
         <div className="flex flex-col items-center h-full p-4">
 
+            {/* TESTING PDF TO IMAGE */}
+            <Button onClick={handlePdfToImage}>Convert PDF to Image</Button>
+
             {/* Tab Title */}
             <h1 className="text-6xl text-left self-start font-bold mb-3">
                 {`Emissions`}
