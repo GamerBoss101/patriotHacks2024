@@ -23,6 +23,10 @@ export default function Sidebar({ buildingid }: SidebarProps) {
     const [isExpanded, setIsExpanded] = useState(true);
     const pathname = usePathname();
 
+    if (pathname.includes("trashcan-mode")) {
+        return <></>;
+    }
+
     return (
         <div className={`flex flex-col items-center p-4 space-y-4 h-full ${isExpanded ? "w-64" : "w-16"}`}>
 
@@ -75,6 +79,9 @@ export default function Sidebar({ buildingid }: SidebarProps) {
                 </Link>
                 <Link color="primary" href={`/buildings/${buildingid}/trash-scanner`}>
                     {pathname === `/buildings/${buildingid}/trash-scanner` ? <strong>Trash Scanner</strong> : "Trash Scanner"}
+                </Link>
+                <Link color="primary" href={`/buildings/${buildingid}/trashcan-mode`}>
+                    {pathname === `/buildings/${buildingid}/trashcan-mode` ? <strong>Trashcan Mode</strong> : "Trashcan Mode"}
                 </Link>
             </nav>
 

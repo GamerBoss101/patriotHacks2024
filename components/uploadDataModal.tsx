@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextui-org/react";
 import { Accordion, AccordionItem } from "@nextui-org/react";
 import { AzureKeyCredential, DocumentAnalysisClient } from "@azure/ai-form-recognizer";
+import { useRouter } from 'next/navigation';
+
 import { ElectricityDataPoint, NaturalGasDataPoint } from "../lib/useBuildingData";
 
 interface UploadDataModalProps {
@@ -25,6 +27,7 @@ export function UploadDataModal({ isOpen, onClose, buildingid, updateBuilding }:
     const [electricityFileUrl, setElectricityFileUrl] = useState<string | null>(null);
     const [extractionStatus, setExtractionStatus] = useState<'idle' | 'loading' | 'complete'>('idle');
     const [dataPreview, setDataPreview] = useState<any>(null);
+    const router = useRouter();
 
     const handleFileUpload = (type: 'gas' | 'electricity', file: File) => {
         if (type === 'gas') {
@@ -93,6 +96,7 @@ export function UploadDataModal({ isOpen, onClose, buildingid, updateBuilding }:
 
                 if (kwh !== 0) {
                     const timestamp = extractedDate || new Date();
+
                     timestamp.setHours(0, 0, 0, 0); // Set to midnight
 
                     const existingDataIndex = dataPoints.findIndex(point =>
@@ -118,6 +122,7 @@ export function UploadDataModal({ isOpen, onClose, buildingid, updateBuilding }:
 
                 if (therms !== 0) {
                     const timestamp = extractedDate || new Date();
+
                     timestamp.setHours(0, 0, 0, 0); // Set to midnight
 
                     const existingDataIndex = dataPoints.findIndex(point =>
@@ -151,6 +156,7 @@ export function UploadDataModal({ isOpen, onClose, buildingid, updateBuilding }:
 
             if (gasFile) {
                 const gasData = await extractDataFromPDF(gasFile, 'gas');
+
                 console.log("Gas data:");
                 gasData.forEach(dataPoint => {
                     console.log("Date:", new Date(dataPoint.timestamp.seconds * 1000).toLocaleDateString(), "Therms:", (dataPoint as NaturalGasDataPoint).therms);
@@ -160,6 +166,7 @@ export function UploadDataModal({ isOpen, onClose, buildingid, updateBuilding }:
 
             if (electricityFile) {
                 const electricityData = await extractDataFromPDF(electricityFile, 'electricity');
+
                 console.log("Electricity data:");
                 electricityData.forEach(dataPoint => {
                     console.log("Date:", new Date(dataPoint.timestamp.seconds * 1000).toLocaleDateString(), "kWh:", (dataPoint as ElectricityDataPoint).kwh);
