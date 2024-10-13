@@ -8,6 +8,7 @@ import { Timestamp } from 'firebase/firestore';
 import { useParams } from "next/navigation";
 
 import { useBuilding, WasteDataPoint } from '@/lib/useBuildingData';
+import { Card } from "@nextui-org/react";
 
 export const trashItems = [
     {
@@ -146,6 +147,11 @@ function TrashcanMode() {
     const [showCamera, setShowCamera] = useState(false); // Default to false as per your preference
     const [isHovering, setIsHovering] = useState(false); // State to detect hover over the switch area
 
+    // state variables for ripple effect
+    const [rippleActive, setRippleActive] = useState(false);
+    const [rippleColor, setRippleColor] = useState<string>('');
+    const [ripplePosition, setRipplePosition] = useState<{ x: string; y: string }>({ x: '50%', y: '50%' });
+
     // References to DOM elements
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -163,6 +169,74 @@ function TrashcanMode() {
     // Inside the component, get the building data
     const { buildingid } = useParams();
     const { data: building, isLoading, error, updateBuilding } = useBuilding(buildingid as string);
+
+    // Helper function to get bin emoji
+    const getBinEmoji = (bin: string) => {
+        switch (bin) {
+            case "Recycling":
+                return "♻️";
+            case "Compost":
+                return "🌿";
+            case "Landfill":
+                return "🗑️";
+            default:
+                return "";
+        }
+    };
+
+    // Helper function to get item emoji
+    const getItemEmoji = (itemId: string) => {
+        switch (itemId) {
+            case "Aluminum-Can":
+                return "🥫";
+            case "Aluminum-Foil":
+                return "🥄";
+            case "Bio-Plastic-Cup":
+                return "🥤";
+            case "Cardboard":
+                return "📦";
+            case "Food":
+                return "🍎";
+            case "Food-Wrapper":
+                return "🍬";
+            case "Paper":
+                return "📄";
+            case "Paper-Cup":
+                return "☕";
+            case "Paper-Plate":
+                return "🍽️";
+            case "Paper-Soft":
+                return "📃";
+            case "Plastic-Bag":
+                return "🛍️";
+            case "Plastic-Bottle":
+                return "🍼";
+            case "Plastic-Container":
+                return "🍱";
+            case "Plastic-Cup":
+                return "🥛";
+            case "Plastic-Utensil":
+                return "🍴";
+            case "Styrofoam":
+                return "📦";
+            default:
+                return "";
+        }
+    };
+
+    // helper function for ripple start position
+    const getBinRippleStartPosition = (bin: string) => {
+        switch (bin) {
+            case "Recycling":
+                return { x: '0%', y: '100%' }; // Bottom-left corner
+            case "Compost":
+                return { x: '50%', y: '100%' }; // Bottom-center
+            case "Landfill":
+                return { x: '100%', y: '100%' }; // Bottom-right corner
+            default:
+                return { x: '50%', y: '50%' }; // Center
+        }
+    };
 
     // Effect to start the model worker
     useEffect(() => {
@@ -307,6 +381,12 @@ function TrashcanMode() {
                                 setThrownItems((prevItems) => [...prevItems, detection.className]);
                                 setShowCelebration(true); // Trigger celebration
                                 setTimeout(() => setShowCelebration(false), 3000); // Stop celebration after 3 seconds
+
+                                // Trigger the ripple effect
+                                setRippleColor(getBinColor(itemDetails.bin));
+                                setRipplePosition(getBinRippleStartPosition(itemDetails.bin));
+                                setRippleActive(true);
+                                setTimeout(() => setRippleActive(false), 1000); // Ripple lasts 1 second
 
                                 const adjustedEmissions = itemDetails.co2e / 1e+3; // Convert kg to tons
                                 const newWasteDataPoint: WasteDataPoint = {
@@ -474,7 +554,7 @@ function TrashcanMode() {
             case "Recycling":
                 return "#00aaff"; // Blue
             case "Compost":
-                return "#00aa00"; // Green
+                return "#33cc33"; // Green
             case "Landfill":
                 return "#aaaaaa"; // Gray
             default:
@@ -500,21 +580,10 @@ function TrashcanMode() {
     return (
         <div
             ref={containerRef}
-            className="w-full h-screen relative overflow-hidden"
-            style={{
-                backgroundColor: currentItem ? getBinColor(currentItem.bin) : "#ffffff",
-                transition: "background-color 0.5s ease-in-out",
-            }}
-            onMouseEnter={() => setIsHovering(true)}
-            onMouseLeave={() => setIsHovering(false)}
+            className="w-full h-screen relative overflow-hidden bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900"
         >
             {/* Hidden video element for capturing webcam feed */}
-            <video
-                ref={videoRef}
-                muted
-                playsInline
-                className="hidden"
-            >
+            <video ref={videoRef} muted playsInline className="hidden">
                 <track kind="captions" />
             </video>
 
@@ -538,69 +607,71 @@ function TrashcanMode() {
                 </div>
             )}
 
-            {/* Switch to toggle camera visibility */}
-            {/* <div
-                className="absolute top-2 right-2 transition-opacity duration-200 z-20"
-                style={{ opacity: isHovering ? 1 : 0 }}
-            >
-                <Switch isSelected={showCamera} onValueChange={setShowCamera}>
-                    Camera
-                </Switch>
-            </div> */}
+            {/* Ripple Effect Overlay */}
+            {rippleActive && (
+                <div
+                    className="ripple-effect"
+                    style={{
+                        backgroundColor: rippleColor,
+                        left: ripplePosition.x,
+                        top: ripplePosition.y,
+                    }}
+                />
+            )}
 
             {/* Main content */}
-            <div className="relative z-10 flex flex-col justify-center items-center h-full w-full">
-                {/* Display celebration animation if item thrown away */}
+            <div className="relative z-10 flex flex-col justify-center items-center w-full h-full p-8">
                 {showCelebration ? (
-                    <div className="flex flex-col justify-center items-center">
-                        {/* Celebration animation */}
-                        <motion.div
-                            animate={{ scale: 1 }}
-                            initial={{ scale: 0 }}
-                            transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
-                        >
-                            <span aria-label="Check Mark" className="text-[11rem]" role="img">
-                                ✅
-                            </span>
-                        </motion.div>
-                    </div>
+                    <motion.div
+                        className="flex flex-col items-center"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
+                    >
+                        <span aria-label="Check Mark" className="text-9xl mb-4" role="img">
+                            ✅
+                        </span>
+                        <h2 className="text-4xl font-bold text-green-600 dark:text-green-400">
+                            Great job!
+                        </h2>
+                    </motion.div>
                 ) : currentItem ? (
-                    // Display detected item
-                    <div className="flex flex-col justify-between items-center h-full w-full p-8">
-                        <div className="flex flex-col items-center pt-8">
-                            <h1 className="text-9xl text-center">
-                                {getArrow(currentItem.bin)} {currentItem.bin} {getArrow(currentItem.bin)}
-                            </h1>
-                        </div>
-
-                        {/* Display item name and note */}
-                        <div className="mb-8">
-                            <h2 className="text-4xl text-center">
-                                {currentItem.name} {currentItem.note ? `- ${currentItem.note}` : ""}
-                            </h2>
-                        </div>
-                    </div>
+                    <Card className="w-full max-w-2xl p-8 bg-white dark:bg-gray-800 shadow-lg">
+                        <h1 className="text-5xl font-bold text-center mb-8 text-gray-800 dark:text-gray-200">
+                            {getBinEmoji(currentItem.bin)} {currentItem.bin}
+                        </h1>
+                        <h2 className="text-3xl text-center mb-4 text-gray-700 dark:text-gray-300">
+                            {getItemEmoji(currentItem.id)} {currentItem.name}
+                        </h2>
+                        {currentItem.note && (
+                            <p className="text-xl text-center text-gray-600 dark:text-gray-400">
+                                {currentItem.note}
+                            </p>
+                        )}
+                    </Card>
                 ) : (
-                    // Display "No Item Detected" message
-                    <div className="flex flex-col items-center">
-                        <h1 className="text-8xl text-center mb-8">No Item Detected</h1>
+                    <Card className="w-full max-w-2xl p-8 bg-white dark:bg-gray-800 shadow-lg">
+                        <h1 className="text-4xl font-bold text-center mb-8 text-gray-800 dark:text-gray-200">
+                            No Item Detected
+                        </h1>
                         {thrownItems.length > 0 && (
-                            <div className="mt-4 text-center">
-                                <h2 className="text-xl font-bold mb-2">Items Thrown Away Recently:</h2>
-                                <p className="text-lg">
+                            <div className="text-center">
+                                <h2 className="text-xl font-semibold mb-2 text-gray-700 dark:text-gray-300">
+                                    Recently Thrown Items:
+                                </h2>
+                                <p className="text-lg text-gray-600 dark:text-gray-400">
                                     {Object.entries(
-                                        thrownItems.slice(-5).reduce((acc: { [key: string]: number }, item) => {
+                                        thrownItems.slice(-5).reduce((acc, item) => {
                                             acc[item] = (acc[item] || 0) + 1;
-
                                             return acc;
-                                        }, {})
+                                        }, {} as Record<string, number>)
                                     )
                                         .map(([item, count]) => (count > 1 ? `${item} (${count}x)` : item))
                                         .join(", ")}
                                 </p>
                             </div>
                         )}
-                    </div>
+                    </Card>
                 )}
             </div>
         </div>

@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+    .ripple-effect {
+        @apply fixed w-5 h-5 rounded-full transform -translate-x-1/2 -translate-y-1/2 scale-0;
+        animation: ripple-animation 1s ease-out forwards;
+        pointer-events: none;
+        z-index: 5;
+    }
+}
+
+@keyframes ripple-animation {
+    to {
+        transform: translate(-50%, -50%) scale(50);
+        opacity: 0;
+    }
+}

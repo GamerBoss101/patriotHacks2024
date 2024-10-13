@@ -90,7 +90,7 @@ export default function EmissionsPage({ params }: EmissionsPageProps) {
         <div className="flex flex-col items-center h-full p-4">
 
             {/* Tab Title */}
-            <h1 className="text-6xl text-left self-start font-bold mb-3">
+            <h1 className="text-6xl text-left self-start font-bold pt-8">
                 {`Emissions`}
             </h1>
 
@@ -176,6 +176,7 @@ export default function EmissionsPage({ params }: EmissionsPageProps) {
                                     </PopoverTrigger>
                                     <PopoverContent>
                                         <Calendar
+                                            showMonthAndYearPickers
                                             value={startDate}
                                             onChange={handleStartDateChange}
                                         />
@@ -191,6 +192,7 @@ export default function EmissionsPage({ params }: EmissionsPageProps) {
                                     </PopoverTrigger>
                                     <PopoverContent>
                                         <Calendar
+                                            showMonthAndYearPickers
                                             value={endDate}
                                             onChange={handleEndDateChange}
                                         />
