@@ -1,3 +1,4 @@
+// trashDetection.tsx
 /* eslint-disable no-console */
 "use client";
 
