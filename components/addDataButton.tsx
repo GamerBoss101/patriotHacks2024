@@ -5,9 +5,9 @@ import { useState } from "react";
 import { Button } from "@nextui-org/react";
 
 import { PlusIcon } from "./icons";
+import { UploadDataModal } from "./uploadDataModal";
 
 import { useBuilding } from "@/lib/useBuildingData";
-import { UploadDataModal } from "./uploadDataModal";
 
 interface AddDataButtonProps {
     buildingid: string;

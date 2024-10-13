@@ -8,6 +8,7 @@ import { useBuilding } from "@/lib/useBuildingData";
 import { Button } from "@nextui-org/button";
 import { Divider } from "@nextui-org/divider";
 import AddDataButton from "@/components/addDataButton";
+import RealtimeModel from "@/components/trashDetection";
 
 interface EmissionsPageProps {
     params: { buildingid: string };
