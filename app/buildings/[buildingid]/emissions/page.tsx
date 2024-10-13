@@ -87,18 +87,18 @@ export default function EmissionsPage({ params }: EmissionsPageProps) {
     return (
         <div className="flex flex-col items-center h-full p-4">
 
-            {/* TESTING PDF TO IMAGE */}
-            <Button onClick={handlePdfToImage}>Convert PDF to Image</Button>
-
             {/* Tab Title */}
             <h1 className="text-6xl text-left self-start font-bold mb-3">
                 {`Emissions`}
             </h1>
 
+
             {/* Group for filters plus graph */}
             <div className="flex flex-col justify-center w-full h-full">
                 {/* Horizontal group for adding data and filters */}
                 <AddDataButton buildingid={params.buildingid} />
+                {/* TESTING PDF TO IMAGE */}
+                <Button onClick={handlePdfToImage}>Convert PDF to Image</Button>
 
                 <div className="flex gap-4 mt-4">
                     {/* Data Type Selection Card */}

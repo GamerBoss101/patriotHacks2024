@@ -1,12 +1,13 @@
 "use client";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import { useBuilding, WasteDataPoint } from "@/lib/useBuildingData";
 import { Button } from "@nextui-org/button";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextui-org/modal";
 import { Input } from "@nextui-org/input";
 import { Timestamp } from "firebase/firestore";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/table";
+
+import { useBuilding, WasteDataPoint } from "@/lib/useBuildingData";
 
 export default function TrashPage() {
     const { buildingid } = useParams();
@@ -53,8 +54,10 @@ export default function TrashPage() {
     const sortedWasteGeneration = [...building.wasteGeneration].sort((a, b) => {
         if (!sortConfig) return 0;
         const { key, direction } = sortConfig;
+
         if (a[key] < b[key]) return direction === 'ascending' ? -1 : 1;
         if (a[key] > b[key]) return direction === 'ascending' ? 1 : -1;
+
         return 0;
     });
 
@@ -90,7 +93,7 @@ export default function TrashPage() {
                 </TableBody>
             </Table>
 
-            <Button onPress={() => setIsModalOpen(true)} className="mt-4">
+            <Button className="mt-4" onPress={() => setIsModalOpen(true)}>
                 Add New Entry
             </Button>
 
@@ -102,8 +105,8 @@ export default function TrashPage() {
                     <ModalBody>
                         <Input
                             label="Timestamp"
-                            type="datetime-local"
                             name="timestamp"
+                            type="datetime-local"
                             value={newEntry.timestamp}
                             onChange={handleInputChange}
                         />
@@ -127,8 +130,8 @@ export default function TrashPage() {
                         />
                         <Input
                             label="Emissions (kg CO2e)"
-                            type="number"
                             name="emissions"
+                            type="number"
                             value={newEntry.emissions.toString()}
                             onChange={handleInputChange}
                         />

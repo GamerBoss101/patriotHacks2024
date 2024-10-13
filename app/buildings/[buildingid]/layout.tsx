@@ -11,7 +11,7 @@ export default function BuildingLayout({
     return (
         <div className="flex h-screen w-full">
             <Sidebar buildingid={params.buildingid} />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 max-h-screen overflow-y-auto">{children}</main>
         </div>
     );
 }

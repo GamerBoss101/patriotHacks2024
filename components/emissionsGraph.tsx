@@ -35,40 +35,88 @@ export default function EmissionsGraph({ buildingid, filters, graphType }: Emiss
     const chartData = useMemo(() => {
         if (!building) return [];
 
-        const dataMap = new Map<string, ChartDataPoint>();
+        const dataMap = new Map<string, Partial<ChartDataPoint>>();
 
         const addDataPoint = (date: Date, type: 'electricity' | 'gas' | 'waste', value: number) => {
             const dateString = date.toISOString().split('T')[0];
-            const existingData = dataMap.get(dateString) || { date: dateString, electricity: 0, gas: 0, waste: 0 };
-            existingData[type] += value;
+            const existingData = dataMap.get(dateString) || { date: dateString };
+            existingData[type] = value;
             dataMap.set(dateString, existingData);
+        };
+
+        // Collect all unique dates and data points
+        const allDates = new Set<string>();
+        const typedDataPoints: { [key: string]: { date: string, value: number }[] } = {
+            electricity: [],
+            gas: [],
+            waste: []
         };
 
         if (filters.showElectricity) {
             building.electricityUsage.forEach((point: ElectricityDataPoint) => {
-                addDataPoint(new Date(point.timestamp.seconds * 1000), 'electricity', point.emissions);
+                const date = new Date(point.timestamp.seconds * 1000);
+                const dateString = date.toISOString().split('T')[0];
+                allDates.add(dateString);
+                typedDataPoints.electricity.push({ date: dateString, value: point.emissions });
             });
         }
 
         if (filters.showGas) {
             building.naturalGasUsage.forEach((point: NaturalGasDataPoint) => {
-                addDataPoint(new Date(point.timestamp.seconds * 1000), 'gas', point.emissions);
+                const date = new Date(point.timestamp.seconds * 1000);
+                const dateString = date.toISOString().split('T')[0];
+                allDates.add(dateString);
+                typedDataPoints.gas.push({ date: dateString, value: point.emissions });
             });
         }
 
         if (filters.showWaste) {
             building.wasteGeneration.forEach((point: WasteDataPoint) => {
-                addDataPoint(new Date(point.timestamp.seconds * 1000), 'waste', point.emissions);
+                const date = new Date(point.timestamp.seconds * 1000);
+                const dateString = date.toISOString().split('T')[0];
+                allDates.add(dateString);
+                typedDataPoints.waste.push({ date: dateString, value: point.emissions });
             });
         }
 
+        // Sort dates and data points
+        const sortedDates = Array.from(allDates).sort();
+        Object.values(typedDataPoints).forEach(points => points.sort((a, b) => a.date.localeCompare(b.date)));
+
+        // Interpolate missing values
+        const interpolateValue = (date: string, points: { date: string, value: number }[]) => {
+            const index = points.findIndex(p => p.date >= date);
+            if (index === -1) return points[points.length - 1]?.value || 0;
+            if (index === 0) return points[0].value;
+            const prev = points[index - 1];
+            const next = points[index];
+            const totalDays = (new Date(next.date).getTime() - new Date(prev.date).getTime()) / (1000 * 60 * 60 * 24);
+            const daysSincePrev = (new Date(date).getTime() - new Date(prev.date).getTime()) / (1000 * 60 * 60 * 24);
+            return Number((prev.value + (next.value - prev.value) * (daysSincePrev / totalDays)).toFixed(3));
+        };
+
+        // Fill in all data points
+        sortedDates.forEach(date => {
+            const point: Partial<ChartDataPoint> = { date };
+            if (filters.showElectricity) point.electricity = interpolateValue(date, typedDataPoints.electricity);
+            if (filters.showGas) point.gas = interpolateValue(date, typedDataPoints.gas);
+            if (filters.showWaste) point.waste = interpolateValue(date, typedDataPoints.waste);
+            dataMap.set(date, point);
+        });
+
+        // Modify the return statement to truncate values
         return Array.from(dataMap.values())
             .filter(point => {
-                const date = new Date(point.date);
+                const date = new Date(point.date || '');
                 return (!filters.startDate || date >= filters.startDate) &&
                     (!filters.endDate || date <= filters.endDate);
             })
-            .sort((a, b) => a.date.localeCompare(b.date));
+            .map(point => ({
+                ...point,
+                electricity: point.electricity ? Number(point.electricity.toFixed(3)) : undefined,
+                gas: point.gas ? Number(point.gas.toFixed(3)) : undefined,
+                waste: point.waste ? Number(point.waste.toFixed(3)) : undefined,
+            }));
     }, [building, filters]);
 
     const pieChartData = useMemo(() => {
@@ -81,7 +129,7 @@ export default function EmissionsGraph({ buildingid, filters, graphType }: Emiss
             wasteTypes.set(type, (wasteTypes.get(type) || 0) + point.emissions);
         });
 
-        return Array.from(wasteTypes, ([name, value]) => ({ name, value }));
+        return Array.from(wasteTypes, ([name, value]) => ({ name, value: Number(value.toFixed(3)) }));
     }, [building, filters.showWaste]);
 
     if (isLoading) {
@@ -99,34 +147,32 @@ export default function EmissionsGraph({ buildingid, filters, graphType }: Emiss
     const renderLineChart = () => (
         <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-                dataKey="date"
-            />
-            <YAxis
-                label={{ value: 'Emissions (kg CO2e)', angle: -90, position: 'insideLeft' }}
-            />
-            <Tooltip />
+            <XAxis dataKey="date" />
+            <YAxis label={{ value: 'Emissions (kg CO2e)', angle: -90, position: 'insideLeft' }} />
+            <Tooltip formatter={(value) => Number(value).toFixed(3)} />
             <Legend />
-            {filters.showElectricity && building && building.electricityUsage.length > 0 && <Line type="monotone" dataKey="electricity" stroke="#8884d8" name="Electricity" />}
-            {filters.showGas && building && building.naturalGasUsage.length > 0 && <Line type="monotone" dataKey="gas" stroke="#82ca9d" name="Natural Gas" />}
-            {filters.showWaste && building && building.wasteGeneration.length > 0 && <Line type="monotone" dataKey="waste" stroke="#ffc658" name="Waste" />}
+            {filters.showElectricity && building && building.electricityUsage.length > 0 &&
+                <Line type="monotone" dataKey="electricity" stroke="#8884d8" name="Electricity" connectNulls />}
+            {filters.showGas && building && building.naturalGasUsage.length > 0 &&
+                <Line type="monotone" dataKey="gas" stroke="#82ca9d" name="Natural Gas" connectNulls />}
+            {filters.showWaste && building && building.wasteGeneration.length > 0 &&
+                <Line type="monotone" dataKey="waste" stroke="#ffc658" name="Waste" connectNulls />}
         </LineChart>
     );
 
     const renderAreaChart = () => (
         <AreaChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-                dataKey="date"
-            />
-            <YAxis
-                label={{ value: 'Emissions (kg CO2e)', angle: -90, position: 'insideLeft' }}
-            />
-            <Tooltip />
+            <XAxis dataKey="date" />
+            <YAxis label={{ value: 'Emissions (kg CO2e)', angle: -90, position: 'insideLeft' }} />
+            <Tooltip formatter={(value) => Number(value).toFixed(3)} />
             <Legend />
-            {filters.showElectricity && building && building.electricityUsage.length > 0 && <Area type="monotone" dataKey="electricity" stackId="1" stroke="#8884d8" fill="#8884d8" name="Electricity" />}
-            {filters.showGas && building && building.naturalGasUsage.length > 0 && <Area type="monotone" dataKey="gas" stackId="1" stroke="#82ca9d" fill="#82ca9d" name="Natural Gas" />}
-            {filters.showWaste && building && building.wasteGeneration.length > 0 && <Area type="monotone" dataKey="waste" stackId="1" stroke="#ffc658" fill="#ffc658" name="Waste" />}
+            {filters.showElectricity && building && building.electricityUsage.length > 0 &&
+                <Area type="monotone" dataKey="electricity" stackId="1" stroke="#8884d8" fill="#8884d8" name="Electricity" connectNulls />}
+            {filters.showGas && building && building.naturalGasUsage.length > 0 &&
+                <Area type="monotone" dataKey="gas" stackId="1" stroke="#82ca9d" fill="#82ca9d" name="Natural Gas" connectNulls />}
+            {filters.showWaste && building && building.wasteGeneration.length > 0 &&
+                <Area type="monotone" dataKey="waste" stackId="1" stroke="#ffc658" fill="#ffc658" name="Waste" connectNulls />}
         </AreaChart>
     );
 
