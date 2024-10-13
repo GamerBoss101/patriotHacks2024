@@ -29,12 +29,11 @@ export default function MissionPage() {
                             Studies show that up to <span className="bg-gradient-to-r from-[#FF705B] to-[#FFB457] text-transparent bg-clip-text">25% of items</span> in recycling bins are actually non-recyclable, contaminating entire loads. Only 32% of commercial waste is recycled, compared to a potential 75% that could be. Proper recycling can reduce a building&apos;s carbon emissions <span className="bg-gradient-to-r from-[#FF705B] to-[#FFB457] text-transparent bg-clip-text">by up to 40%</span>.
                             <br />
                             <br />
-                            <strong>Carboniferous</strong> uses a machine learning algorithm to identify the type of waste at the trash chute, nudging the occupants to recycle correctly with a friendly reminder. Our long term goal is to <span className="bg-gradient-to-r from-[#FF705B] to-[#FFB457] text-transparent bg-clip-text">educate building occupants</span>, something we know will truly revolutionize waste management, making efficient sorting and recycling the norm, and significantly curtailing the carbon impact of our daily operations.
+                            <strong>Carboniferous</strong> uses a machine learning algorithm to identify the type of waste at the trash chute, nudging the occupants to recycle correctly with a friendly reminder. Our long term goal is to <span className="bg-gradient-to-r from-[#FF705B] to-[#FFB457] text-transparent bg-clip-text">educate building occupants</span>, something we know will truly revolutionize waste management, make efficient sorting and recycling the norm, and significantly curtail the carbon impact of our daily operations.
                         </p>
                         <Button
                             as={Link}
                             href="/buildings"
-                            color="warning"
                             variant="solid"
                             size="lg"
                             endContent={
@@ -42,7 +41,7 @@ export default function MissionPage() {
                                     <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
                                 </svg>
                             }
-                            className="mb-2 mt-6"
+                            className="mb-2 mt-6 bg-orange-500 text-white"
                         >
                             Intrigued? Explore participating buildings
                         </Button>

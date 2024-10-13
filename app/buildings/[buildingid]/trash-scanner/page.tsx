@@ -138,9 +138,11 @@ const TrashScanner: React.FC = () => {
     useEffect(() => {
         const canvas = canvasRef.current;
         const largeCanvas = largeCanvasRef.current;
+
         if (canvas && largeCanvas) {
             const ctx = canvas.getContext('2d');
             const largeCtx = largeCanvas.getContext('2d');
+
             if (ctx && largeCtx) {
                 drawPixelatedFace(ctx, expression, 10);
                 drawPixelatedFace(largeCtx, expression, 30);
