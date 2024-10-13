@@ -228,11 +228,11 @@ function TrashcanMode() {
     const getBinRippleStartPosition = (bin: string) => {
         switch (bin) {
             case "Recycling":
-                return { x: '0%', y: '100%' }; // Bottom-left corner
+                return { x: '100%', y: '100%' }; // Bottom-right corner
             case "Compost":
                 return { x: '50%', y: '100%' }; // Bottom-center
             case "Landfill":
-                return { x: '100%', y: '100%' }; // Bottom-right corner
+                return { x: '0%', y: '100%' }; // Bottom-left corner
             default:
                 return { x: '50%', y: '50%' }; // Center
         }
@@ -386,7 +386,7 @@ function TrashcanMode() {
                                 setRippleColor(getBinColor(itemDetails.bin));
                                 setRipplePosition(getBinRippleStartPosition(itemDetails.bin));
                                 setRippleActive(true);
-                                setTimeout(() => setRippleActive(false), 1000); // Ripple lasts 1 second
+                                setTimeout(() => setRippleActive(false), 3000); // Ripple lasts 3 seconds
 
                                 const adjustedEmissions = itemDetails.co2e / 1e+3; // Convert kg to tons
                                 const newWasteDataPoint: WasteDataPoint = {
@@ -638,7 +638,7 @@ function TrashcanMode() {
                 ) : currentItem ? (
                     <Card className="w-full max-w-2xl p-8 bg-white dark:bg-gray-800 shadow-lg">
                         <h1 className="text-5xl font-bold text-center mb-8 text-gray-800 dark:text-gray-200">
-                            {getBinEmoji(currentItem.bin)} {currentItem.bin}
+                            {getBinEmoji(currentItem.bin)} {currentItem.bin} {getArrow(currentItem.bin)}
                         </h1>
                         <h2 className="text-3xl text-center mb-4 text-gray-700 dark:text-gray-300">
                             {getItemEmoji(currentItem.id)} {currentItem.name}
