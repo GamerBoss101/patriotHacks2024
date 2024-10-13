@@ -9,15 +9,18 @@ import screenfull from 'screenfull';
 const TrashScanner: React.FC = () => {
     const webcamRef = useRef<Webcam>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const largeCanvasRef = useRef<HTMLCanvasElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [startPos, setStartPos] = useState({ x: 0, y: 0 });
     const [endPos, setEndPos] = useState({ x: 0, y: 0 });
     const containerRef = useRef<HTMLDivElement>(null);
+    const [expression, setExpression] = useState<'smile' | 'neutral' | 'frown'>('smile');
 
     //canvas size
     const setCanvasSize = useCallback(() => {
         const video = webcamRef.current?.video;
         const canvas = canvasRef.current;
+
         if (video && canvas) {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
@@ -31,6 +34,7 @@ const TrashScanner: React.FC = () => {
         if (video) {
             video.addEventListener('loadedmetadata', setCanvasSize);
         }
+
         return () => {
             if (video) {
                 video.removeEventListener('loadedmetadata', setCanvasSize);
@@ -98,10 +102,56 @@ const TrashScanner: React.FC = () => {
         }
     }, []);
 
+    const drawPixelatedFace = useCallback((ctx: CanvasRenderingContext2D, expression: 'smile' | 'neutral' | 'frown', size: number) => {
+        ctx.fillStyle = '#008B8B'; // Dark cyan
+
+        // Face
+        for (let y = 0; y < 8; y++) {
+            for (let x = 0; x < 8; x++) {
+                ctx.fillRect(x * size, y * size, size, size);
+            }
+        }
+
+        // Eyes
+        ctx.fillStyle = '#ADD8E6'; // Light blue
+        ctx.fillRect(1 * size, 2 * size, size, size * 2);
+        ctx.fillRect(6 * size, 2 * size, size, size * 2);
+
+        // Mouth
+        switch (expression) {
+            case 'smile':
+                ctx.fillRect(2 * size, 5 * size, size, size);
+                ctx.fillRect(3 * size, 6 * size, size * 2, size);
+                ctx.fillRect(5 * size, 5 * size, size, size);
+                break;
+            case 'neutral':
+                ctx.fillRect(2 * size, 5 * size, size * 4, size);
+                break;
+            case 'frown':
+                ctx.fillRect(2 * size, 6 * size, size, size);
+                ctx.fillRect(3 * size, 5 * size, size * 2, size);
+                ctx.fillRect(5 * size, 6 * size, size, size);
+                break;
+        }
+    }, []);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const largeCanvas = largeCanvasRef.current;
+        if (canvas && largeCanvas) {
+            const ctx = canvas.getContext('2d');
+            const largeCtx = largeCanvas.getContext('2d');
+            if (ctx && largeCtx) {
+                drawPixelatedFace(ctx, expression, 10);
+                drawPixelatedFace(largeCtx, expression, 30);
+            }
+        }
+    }, [expression, drawPixelatedFace]);
+
     return (
         <div className="container-fluid p-4">
             <h1 className="text-2xl font-bold text-center mb-4">Trash Scanner</h1>
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col md:flex-row items-center md:items-start md:space-x-4">
                 <Card className="w-full md:w-auto md:max-w-[640px] mb-4">
                     <CardBody className="p-0">
                         <div ref={containerRef} className="relative aspect-video">
@@ -122,13 +172,41 @@ const TrashScanner: React.FC = () => {
                         </div>
                     </CardBody>
                 </Card>
-                <Button
-                    onClick={toggleFullScreen}
-                    className="w-full md:w-auto md:max-w-[640px]"
-                >
-                    Toggle Fullscreen
-                </Button>
+                <div className="flex flex-col items-center">
+                    <canvas
+                        ref={largeCanvasRef}
+                        width={240}
+                        height={240}
+                        className="mb-4"
+                    />
+                    <div className="flex justify-center space-x-4">
+                        {['smile', 'neutral', 'frown'].map((exp) => (
+                            <canvas
+                                key={exp}
+                                width={80}
+                                height={80}
+                                onClick={() => setExpression(exp as 'smile' | 'neutral' | 'frown')}
+                                ref={(canvas) => {
+                                    if (canvas) {
+                                        const ctx = canvas.getContext('2d');
+                                        if (ctx) {
+                                            drawPixelatedFace(ctx, exp as 'smile' | 'neutral' | 'frown', 10);
+                                        }
+                                    }
+                                }}
+                                className="cursor-pointer"
+                            />
+                        ))}
+                    </div>
+                    <p className="mt-2">Current expression: {expression}</p>
+                </div>
             </div>
+            <Button
+                onClick={toggleFullScreen}
+                className="w-full md:w-auto md:max-w-[640px] mt-4"
+            >
+                Toggle Fullscreen
+            </Button>
         </div>
     );
 };

@@ -6,6 +6,7 @@ import {
     NavbarBrand,
     NavbarItem,
 } from "@nextui-org/navbar";
+import { Button } from "@nextui-org/button";
 import { Link } from "@nextui-org/link";
 import NextLink from "next/link";
 import { usePathname } from 'next/navigation';
@@ -26,9 +27,31 @@ export const Navbar = () => {
             <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
                 <NavbarBrand as="li" className="gap-3">
                     <NextLink className="flex justify-start items-center gap-1" href="/">
-                        <p className="font-bold text-inherit">Building Carbon Tracker</p>
+                        <p className="text-2xl font-bold font-baskerville">Carboniferous</p>
                     </NextLink>
                 </NavbarBrand>
+            </NavbarContent>
+
+            <NavbarContent className="hidden sm:flex basis-1/5 sm:basis-full" justify="center">
+                <NavbarItem>
+                    <Button
+                        as={NextLink}
+                        href="/buildings"
+                        className="bg-orange-500 text-white min-w-[120px]"
+                    >
+                        Buildings
+                    </Button>
+                </NavbarItem>
+                <NavbarItem>
+                    <Button
+                        as={NextLink}
+                        href="/mission"
+                        className="text-orange-500 min-w-[120px]"
+                        variant="ghost"
+                    >
+                        Our Mission
+                    </Button>
+                </NavbarItem>
             </NavbarContent>
 
             <NavbarContent

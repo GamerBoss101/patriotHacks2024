@@ -75,7 +75,7 @@ export default function Home() {
             />
             <FeatureBox
               title="Measure Your Impact"
-              description="Track your building's emissions reduction and calculate cost savings achieved through our smart bin system."
+              description="Track your building's emissions reduction and see the emissions saved through our smart bin system."
               theme={theme}
             />
           </div>

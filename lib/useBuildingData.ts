@@ -37,7 +37,7 @@ export type Building = {
     id: string;
     address: string;
     yearBuilt: number;
-    squareFootage: number;
+    squareFeet: number;
     imageURL: string;
     electricityUsage: Array<ElectricityDataPoint>;
     naturalGasUsage: Array<NaturalGasDataPoint>;

@@ -41,14 +41,11 @@ export default function RootLayout({
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "light" }}>
-          <div className="relative flex flex-col h-screen w-full">
+          <div className="flex flex-col min-h-screen">
             <Navbar />
-            <main className="container max-w-full flex-grow w-full">
+            <main className="flex-1">
               {children}
             </main>
-            <footer className="py-4 text-center bg-background">
-              <p>Created for PatriotHacks 2024</p>
-            </footer>
           </div>
         </Providers>
       </body>

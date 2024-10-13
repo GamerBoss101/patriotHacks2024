@@ -68,7 +68,16 @@ export default function EmissionsGraph({ buildingid, filters }: EmissionsGraphPr
             .sort((a, b) => a.date.localeCompare(b.date));
     }, [building, filters]);
 
-    if (isLoading) return <div>Loading...</div>;
+    if (isLoading) {
+        return (
+            <div className="w-full h-96 bg-gray-200 animate-pulse rounded-lg">
+                {/* Skeleton content */}
+                <div className="h-full flex items-center justify-center">
+                    <span className="text-gray-400">Loading...</span>
+                </div>
+            </div>
+        );
+    }
     if (error) return <div>Error: {error.message}</div>;
 
     return (

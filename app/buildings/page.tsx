@@ -1,5 +1,6 @@
 // app/buildings/page.tsx
 "use client";
+
 import { Card, CardHeader, CardFooter, Image, Button, Skeleton } from "@nextui-org/react";
 import Link from "next/link";
 
@@ -11,7 +12,7 @@ export default function BuildingsPage() {
 
     if (isLoading) return (
         <div className="grid grid-cols-12 gap-4 p-4">
-            {[...Array(2)].map((_, index) => (
+            {[...Array(3)].map((_, index) => (
                 <Card key={index} className="w-full h-[300px] col-span-12 sm:col-span-6 md:col-span-4">
                     <Skeleton className="rounded-lg">
                         <div className="h-[300px]" />
@@ -23,7 +24,7 @@ export default function BuildingsPage() {
     if (error) return <div>Error: {error.message}</div>;
 
     if (buildings) return (
-        <div className="grid grid-cols-12 gap-4 p-4">
+        <div className="grid grid-cols-12 gap-4 p-4 h-full bg-orange-900/5">
             {buildings.map(building => (
                 <Card
                     key={building.id}
@@ -43,7 +44,7 @@ export default function BuildingsPage() {
                     <CardFooter className="absolute bg-black/40 bottom-0 z-10 justify-between">
                         <div>
                             <p className="text-white text-tiny">Year Built: {building.yearBuilt}</p>
-                            <p className="text-white text-tiny">Square Footage: {building.squareFootage}</p>
+                            <p className="text-white text-tiny">Square Footage: {building.squareFeet.toLocaleString()}</p>
                         </div>
                         <Link href={`/buildings/${building.id}/emissions`}>
                             <Button className="text-tiny" color="primary" radius="full" size="sm">
