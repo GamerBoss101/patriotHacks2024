@@ -6,8 +6,10 @@ import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextu
 import { Input } from "@nextui-org/input";
 import { Timestamp } from "firebase/firestore";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/table";
+import { Select, SelectItem } from "@nextui-org/react";
 
 import { useBuilding, WasteDataPoint } from "@/lib/useBuildingData";
+import { trashItems } from "@/components/trashcanMode";
 
 export default function TrashPage() {
     const { buildingid } = useParams();
@@ -26,10 +28,17 @@ export default function TrashPage() {
     if (error) return <div>Error: {error.message}</div>;
     if (!building) return <div>Building not found</div>;
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
 
-        setNewEntry(prev => ({ ...prev, [name]: value }));
+        if (name === 'emissions') {
+            const inputValue = parseFloat(value);
+            const scaledValue = isNaN(inputValue) ? 0 : inputValue / 1e+3;
+
+            setNewEntry(prev => ({ ...prev, [name]: scaledValue }));
+        } else {
+            setNewEntry(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleSubmit = () => {
@@ -74,7 +83,7 @@ export default function TrashPage() {
                     <TableColumn key="wasteCategory" onClick={() => handleSort('wasteCategory')}>Name</TableColumn>
                     <TableColumn key="type" onClick={() => handleSort('type')}>Trash Category</TableColumn>
                     <TableColumn key="trashcanID" onClick={() => handleSort('trashcanID')}>Trashcan ID</TableColumn>
-                    <TableColumn key="emissions" onClick={() => handleSort('emissions')}>Emissions (metric tons CO2e)</TableColumn>
+                    <TableColumn key="emissions" onClick={() => handleSort('emissions')}>Emissions (kg ofCO2e)</TableColumn>
                     <TableColumn key="actions">Actions</TableColumn>
                 </TableHeader>
                 <TableBody>
@@ -84,7 +93,7 @@ export default function TrashPage() {
                             <TableCell>{wastePoint.wasteCategory}</TableCell>
                             <TableCell>{wastePoint.type}</TableCell>
                             <TableCell>{wastePoint.trashcanID}</TableCell>
-                            <TableCell>{wastePoint.emissions.toFixed(2)}</TableCell>
+                            <TableCell>{(wastePoint.emissions * 1e+3).toFixed(0)}</TableCell>
                             <TableCell>
                                 <Button color="danger" size="sm" onPress={() => handleDelete(index)}>Delete</Button>
                             </TableCell>
@@ -110,29 +119,46 @@ export default function TrashPage() {
                             value={newEntry.timestamp}
                             onChange={handleInputChange}
                         />
-                        <Input
+                        <Select
+                            className="w-full"
                             label="Type"
                             name="type"
-                            value={newEntry.type}
+                            selectedKeys={[newEntry.type]}
                             onChange={handleInputChange}
-                        />
+                        >
+                            {trashItems.map((item) => (
+                                <SelectItem key={item.id} value={item.id}>
+                                    {item.name}
+                                </SelectItem>
+                            ))}
+                        </Select>
                         <Input
                             label="Trashcan ID"
                             name="trashcanID"
                             value={newEntry.trashcanID}
                             onChange={handleInputChange}
                         />
-                        <Input
+                        <Select
                             label="Waste Category"
                             name="wasteCategory"
-                            value={newEntry.wasteCategory}
+                            selectedKeys={[newEntry.wasteCategory]}
                             onChange={handleInputChange}
-                        />
+                        >
+                            <SelectItem key="Landfill" value="Landfill">
+                                Landfill
+                            </SelectItem>
+                            <SelectItem key="Recycling" value="Recycling">
+                                Recycling
+                            </SelectItem>
+                            <SelectItem key="Compost" value="Compost">
+                                Compost
+                            </SelectItem>
+                        </Select>
                         <Input
-                            label="Emissions (metric tons CO2e)"
+                            label="Emissions (grams of CO2e)"
                             name="emissions"
                             type="number"
-                            value={newEntry.emissions.toString()}
+                            value={(newEntry.emissions * 1e+3).toString()} // Multiply by 1e+3 for display
                             onChange={handleInputChange}
                         />
                     </ModalBody>

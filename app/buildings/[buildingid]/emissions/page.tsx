@@ -3,17 +3,17 @@
 
 import { useState, useEffect } from "react";
 import { CalendarDate } from "@internationalized/date";
-
-import EmissionsGraph from "@/components/emissionsGraph";
-import { useBuilding } from "@/lib/useBuildingData";
 import { Button } from "@nextui-org/button";
 import { Divider } from "@nextui-org/divider";
-import AddDataButton from "@/components/addDataButton";
 import { ButtonGroup } from "@nextui-org/button";
 import { Card, CardHeader, CardBody } from "@nextui-org/react";
 import { Input } from "@nextui-org/input";
 import { Popover, PopoverTrigger, PopoverContent } from "@nextui-org/popover";
 import { Calendar, DateValue } from "@nextui-org/calendar";
+
+import AddDataButton from "@/components/addDataButton";
+import { useBuilding } from "@/lib/useBuildingData";
+import EmissionsGraph from "@/components/emissionsGraph";
 
 interface EmissionsPageProps {
     params: { buildingid: string };
@@ -69,6 +69,7 @@ export default function EmissionsPage({ params }: EmissionsPageProps) {
             }
 
             const result = await response.json();
+
             console.log('PDF to Image conversion result:', result);
             // Handle the result as needed
         } catch (error) {
@@ -168,9 +169,9 @@ export default function EmissionsPage({ params }: EmissionsPageProps) {
                                 <Popover placement="bottom">
                                     <PopoverTrigger>
                                         <Input
+                                            readOnly
                                             label="Start Date"
                                             value={startDate ? startDate.toString() : ''}
-                                            readOnly
                                         />
                                     </PopoverTrigger>
                                     <PopoverContent>
@@ -183,9 +184,9 @@ export default function EmissionsPage({ params }: EmissionsPageProps) {
                                 <Popover placement="bottom">
                                     <PopoverTrigger>
                                         <Input
+                                            readOnly
                                             label="End Date"
                                             value={endDate ? endDate.toString() : ''}
-                                            readOnly
                                         />
                                     </PopoverTrigger>
                                     <PopoverContent>

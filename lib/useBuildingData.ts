@@ -62,10 +62,13 @@ const updateBuildingInAPI = async (buildingId: string, newData: Partial<Building
         },
         body: JSON.stringify({ id: buildingId, ...newData }),
     });
+
     if (!response.ok) {
         const errorData = await response.json();
+
         throw new Error(`Network response was not ok: ${response.status} ${response.statusText}. ${JSON.stringify(errorData)}`);
     }
+
     return response.json();
 }
 
@@ -103,7 +106,9 @@ export function useBuilding(buildingId: string) {
 
                 if (data.operation === 'deleteWasteEntry' && typeof data.index === 'number') {
                     const newWasteGeneration = [...oldData.wasteGeneration];
+
                     newWasteGeneration.splice(data.index, 1);
+
                     return { ...oldData, wasteGeneration: newWasteGeneration };
                 }
 
@@ -131,8 +136,10 @@ export function useBuilding(buildingId: string) {
 
 const getBuildingFromAPI = async (buildingId: string): Promise<Building> => {
     const response = await fetch(`/api/buildings?id=${buildingId}`);
+
     if (!response.ok) {
         throw new Error('Network response was not ok');
     }
+
     return response.json();
 }

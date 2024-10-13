@@ -4,109 +4,112 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { InferenceEngine, CVImage } from "inferencejs";
 import { motion } from "framer-motion";
-import { Switch } from "@nextui-org/react"; // Import the Switch component
+import { Timestamp } from 'firebase/firestore';
+import { useParams } from "next/navigation";
 
-const trashItems = [
+import { useBuilding, WasteDataPoint } from '@/lib/useBuildingData';
+
+export const trashItems = [
     {
         id: "Aluminum-Can",
         name: "Aluminum Can",
         bin: "Recycling",
-        co2e: 130,
+        co2e: 170,
     },
     {
         id: "Aluminum-Foil",
         name: "Aluminum Foil",
         bin: "Recycling",
         note: "Please rinse and flatten",
-        co2e: 2,
+        co2e: 10,
     },
     {
         id: "Bio-Plastic-Cup",
         name: "Bio-Plastic Cup",
         bin: "Compost",
-        co2e: 21,
+        co2e: 70,
     },
     {
         id: "Cardboard",
         name: "Cardboard",
         bin: "Recycling",
         note: "Please flatten all cardboard",
-        co2e: 22,
+        co2e: 80,
     },
     {
         id: "Food",
         name: "Food",
         bin: "Compost",
-        co2e: 374,
+        co2e: 1000,
     },
     {
         id: "Food-Wrapper",
         name: "Food Wrapper",
         bin: "Landfill",
-        co2e: 155,
+        co2e: 6,
     },
     {
         id: "Paper",
         name: "Paper",
         bin: "Recycling",
-        co2e: 42,
+        co2e: 8,
     },
     {
         id: "Paper-Cup",
         name: "Paper Cup",
         bin: "Recycling",
-        co2e: 66,
+        co2e: 11,
     },
     {
         id: "Paper-Plate",
         name: "Paper Plate",
         bin: "Compost",
-        co2e: 62,
+        co2e: 15,
     },
     {
         id: "Paper-Soft",
         name: "Soft Paper",
         bin: "Recycling",
-        co2e: 27,
+        co2e: 5,
     },
     {
         id: "Plastic-Bag",
         name: "Plastic Bag",
         bin: "Landfill",
-        co2e: 45,
+        co2e: 33,
     },
     {
         id: "Plastic-Bottle",
         name: "Plastic Bottle",
         bin: "Recycling",
         note: "Only hard number 1 or 2 bottles",
-        co2e: 241,
+        co2e: 82,
     },
     {
         id: "Plastic-Container",
         name: "Plastic Container",
         bin: "Recycling",
         note: "Only hard plastics number 1 or 2",
-        co2e: 30,
+        co2e: 100,
     },
     {
         id: "Plastic-Cup",
         name: "Plastic Cup",
         bin: "Recycling",
         note: "Only hard plastics number 1 or 2",
-        co2e: 33,
+        co2e: 30,
     },
     {
         id: "Plastic-Utensil",
         name: "Plastic Utensil",
         bin: "Landfill",
-        co2e: 59,
+        co2e: 8,
     },
     {
         id: "Styrofoam",
         name: "Styrofoam",
         bin: "Landfill",
-        co2e: 19,
+        co2e: 45,
     },
 ];
 
@@ -156,6 +159,10 @@ function TrashcanMode() {
         itemDetails: null,
         timestamp: 0,
     });
+
+    // Inside the component, get the building data
+    const { buildingid } = useParams();
+    const { data: building, isLoading, error, updateBuilding } = useBuilding(buildingid as string);
 
     // Effect to start the model worker
     useEffect(() => {
@@ -220,8 +227,8 @@ function TrashcanMode() {
         inferEngine.infer(modelWorkerId, img).then((predictions: unknown) => {
             const typedPredictions = predictions as Prediction[];
 
-            const videoWidth = videoRef.current.videoWidth;
-            const videoHeight = videoRef.current.videoHeight;
+            const videoWidth = videoRef.current?.videoWidth ?? 640;
+            const videoHeight = videoRef.current?.videoHeight ?? 480;
 
             const now = Date.now();
 
@@ -300,6 +307,23 @@ function TrashcanMode() {
                                 setThrownItems((prevItems) => [...prevItems, detection.className]);
                                 setShowCelebration(true); // Trigger celebration
                                 setTimeout(() => setShowCelebration(false), 3000); // Stop celebration after 3 seconds
+
+                                const adjustedEmissions = itemDetails.co2e / 1e+3; // Convert kg to tons
+                                const newWasteDataPoint: WasteDataPoint = {
+                                    timestamp: Timestamp.now(),
+                                    type: itemDetails.id,
+                                    trashcanID: '1', // Use trashcan ID 1
+                                    wasteCategory: itemDetails.bin,
+                                    emissions: adjustedEmissions,
+                                };
+
+                                // Update the building's waste generation data
+                                const updatedWasteGeneration = [
+                                    ...(building?.wasteGeneration || []),
+                                    newWasteDataPoint,
+                                ];
+
+                                updateBuilding({ wasteGeneration: updatedWasteGeneration });
                             } else {
                                 // Incorrect bin, do not trigger celebration
                                 setCurrentItem(null);
@@ -408,6 +432,7 @@ function TrashcanMode() {
                 centerY <= area.y + area.height
             ) {
                 const isCorrect = bin === correctBin;
+
                 return isCorrect;
             }
         }
@@ -566,6 +591,7 @@ function TrashcanMode() {
                                     {Object.entries(
                                         thrownItems.slice(-5).reduce((acc: { [key: string]: number }, item) => {
                                             acc[item] = (acc[item] || 0) + 1;
+
                                             return acc;
                                         }, {})
                                     )
