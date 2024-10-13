@@ -74,7 +74,7 @@ export default function TrashPage() {
                     <TableColumn key="wasteCategory" onClick={() => handleSort('wasteCategory')}>Name</TableColumn>
                     <TableColumn key="type" onClick={() => handleSort('type')}>Trash Category</TableColumn>
                     <TableColumn key="trashcanID" onClick={() => handleSort('trashcanID')}>Trashcan ID</TableColumn>
-                    <TableColumn key="emissions" onClick={() => handleSort('emissions')}>Emissions (kg CO2e)</TableColumn>
+                    <TableColumn key="emissions" onClick={() => handleSort('emissions')}>Emissions (metric tons CO2e)</TableColumn>
                     <TableColumn key="actions">Actions</TableColumn>
                 </TableHeader>
                 <TableBody>
@@ -129,7 +129,7 @@ export default function TrashPage() {
                             onChange={handleInputChange}
                         />
                         <Input
-                            label="Emissions (kg CO2e)"
+                            label="Emissions (metric tons CO2e)"
                             name="emissions"
                             type="number"
                             value={newEntry.emissions.toString()}
