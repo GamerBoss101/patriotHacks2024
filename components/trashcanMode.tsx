@@ -6,9 +6,9 @@ import { InferenceEngine, CVImage } from "inferencejs";
 import { motion } from "framer-motion";
 import { Timestamp } from 'firebase/firestore';
 import { useParams } from "next/navigation";
+import { Card } from "@nextui-org/react";
 
 import { useBuilding, WasteDataPoint } from '@/lib/useBuildingData';
-import { Card } from "@nextui-org/react";
 
 export const trashItems = [
     {
@@ -144,7 +144,7 @@ function TrashcanMode() {
     const [currentItem, setCurrentItem] = useState<any | null>(null); // Current detected item
     const [thrownItems, setThrownItems] = useState<string[]>([]); // List of items estimated to be thrown away
     const [showCelebration, setShowCelebration] = useState(false); // State to trigger celebration
-    const [showCamera, setShowCamera] = useState(false); // Default to false as per your preference
+    const [showCamera, setShowCamera] = useState(true); // Default to false
     const [isHovering, setIsHovering] = useState(false); // State to detect hover over the switch area
 
     // state variables for ripple effect
@@ -210,7 +210,7 @@ function TrashcanMode() {
             case "Plastic-Bag":
                 return "🛍️";
             case "Plastic-Bottle":
-                return "🍼";
+                return "🥤";
             case "Plastic-Container":
                 return "🍱";
             case "Plastic-Cup":
@@ -218,7 +218,7 @@ function TrashcanMode() {
             case "Plastic-Utensil":
                 return "🍴";
             case "Styrofoam":
-                return "📦";
+                return "💭";
             default:
                 return "";
         }
@@ -623,9 +623,9 @@ function TrashcanMode() {
             <div className="relative z-10 flex flex-col justify-center items-center w-full h-full p-8">
                 {showCelebration ? (
                     <motion.div
+                        animate={{ scale: 1 }}
                         className="flex flex-col items-center"
                         initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
                         transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
                     >
                         <span aria-label="Check Mark" className="text-9xl mb-4" role="img">
@@ -663,6 +663,7 @@ function TrashcanMode() {
                                     {Object.entries(
                                         thrownItems.slice(-5).reduce((acc, item) => {
                                             acc[item] = (acc[item] || 0) + 1;
+
                                             return acc;
                                         }, {} as Record<string, number>)
                                     )
